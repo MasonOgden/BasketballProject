@@ -1,0 +1,82 @@
+---
+title: "BasketballProject"
+author: "Mason Ogden"
+date: "December 11, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(plotly)
+```
+
+
+```{r read data}
+test_data <- read.csv("https://www.dropbox.com/s/u3oijk3eh1oxm3q/BasketballData.csv?dl=1")
+#data <- data %>%
+#  select(Rk:X3P_Percent) %>%
+#  rename(three_p_made = X3P_Made,
+#         three_p_attempted = X3P_Attempted, 
+#         three_p_percent = X3P_Percent)
+
+```
+
+
+```{r plotly1}
+
+percent_avgs <- test_data %>%
+  filter(X3P_Made > 81) %>%
+  summarize(avg_3p_percent = mean(X3P_Percent),
+            avg_2p_percent = mean(X2P_Percent))
+
+corr_data <- test_data %>% 
+  top_n(30, X3P_Percent)
+
+annotations_settings <- list(
+  x = percent_avgs$avg_3p_percent,
+  y = percent_avgs$avg_2p_percent,
+  text = "League Average",
+  xref = "x",
+  yref = "y",
+  showarrow = TRUE,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+  
+
+font_settings <- list(
+  family = "Courier New, monospace",
+  size = 18,
+  color = "#7f7f7f"
+)
+x_settings <- list(
+  title = "3P%",
+  titlefont = font_settings,
+  range=c(0.30, 0.60)
+)
+y_settings <- list(
+  title = "2P%",
+  titlefont = font_settings,
+  range=c(0.10,0.70)
+)
+
+corr_p <- plot_ly(type = 'scatter', mode = 'markers') %>%
+  add_trace(
+    x = corr_data$X3P_Percent, 
+    y = corr_data$X2P_Percent,
+    text = corr_data$Player,
+    hoverinfo = 'text',
+    marker = list(color='green'),
+    showlegend = FALSE
+  ) %>%
+  layout(title="3P% vs. 2P% for the Leaders in 3P%", xaxis=x_settings, yaxis=y_settings,
+         annotations=annotations_settings)
+
+corr_p
+```
+
