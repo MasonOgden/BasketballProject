@@ -12,7 +12,7 @@
 library(shiny)
 library(tidyverse)
 library(plotly)
-library(rdrop2)
+library(RColorBrewer)
 
 
 
@@ -127,6 +127,8 @@ p4 <- plot_ly(type = 'scatter', mode = 'markers') %>%
          annotations=annotations_settings)
 
 plot_list <- list(p1, p2, p3, p4)
+all_data <- read.csv("https://www.dropbox.com/s/ebj4qfc2lru2u4e/game_data.csv?dl=1")
+
 # Define server logic required to plot the data
 shinyServer(function(input, output) {
   
@@ -142,5 +144,29 @@ shinyServer(function(input, output) {
   )})
   
   output$my_plot <- renderPlotly({plot_list[[plot_num()]]})
+  
+  show_teams <- reactive({input$teams})
+  
+  color_pallete <- brewer.pal(8, "Dark2")
+  
+  output$wl_plot <- renderPlotly({all_data %>%
+    filter(team %in% show_teams()) %>%
+    plot_ly(x=~G, y=~win_loss,
+            type="scatter", mode="lines",
+            text = ~paste(team,
+                          "<br>", "W/L: ", round(win_loss, digits=2),
+                          "<br>", "Gm: ", G),
+            hoverinfo='text', color=~team,
+            colors=color_pallete) %>%
+    layout(title="Game-to-Game Win/Loss Ratio (as of 12/14/19)",
+           xaxis=list(
+             title = "Games Played",
+             titlefont = font_settings,
+             range = c(0, max(all_data$G))),
+           yaxis=list(
+             title = "Win/Loss Ratio",
+             titlefont = font_settings,
+             range = c(0, max(all_data$win_loss, na.rm=TRUE)))
+           )})
   
 })

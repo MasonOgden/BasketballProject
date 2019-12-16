@@ -7,15 +7,19 @@
 #    http://shiny.rstudio.com/
 #
 
+library(tidyverse)
 library(shiny)
 library(shinythemes)
 library(plotly)
 
+all_data <- read.csv(
+  "https://www.dropbox.com/s/ebj4qfc2lru2u4e/game_data.csv?dl=1")
+
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(theme = shinytheme("sandstone"),
+shinyUI(navbarPage("Basketball", theme = shinytheme("flatly"),
   
   # Application title
-  titlePanel("3-Pointers"),
+  tabPanel("3 Pointers",
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
@@ -32,5 +36,22 @@ shinyUI(fluidPage(theme = shinytheme("sandstone"),
     mainPanel(
        plotlyOutput("my_plot")
     )
-  )
+  )),
+  tabPanel("Win/Loss Ratio",
+    sidebarLayout(
+      sidebarPanel(
+        selectizeInput(inputId="teams", label="Teams to show:",
+                       choices = all_data %>%
+                         pull(team) %>%
+                         unique,
+                       selected = "Clippers",
+                       multiple=TRUE,
+                       options=list(maxItems=4))
+      ),
+      mainPanel(
+        plotlyOutput("wl_plot")
+      )
+    )
+           
+           )
 ))

@@ -25,7 +25,7 @@ library(plotly)
 
 ```
 
-```{r}
+```{r function for calcuating win/loss}
 get_game_wl <- function(data) {
   win_count <- 0
   loss_count <- 0
@@ -50,13 +50,6 @@ get_game_wl <- function(data) {
 ```
 
 
-```{r get all data}
-bucks <- read.table("C:/Users/Mason/Desktop/Git Repositories/BasketballProject/GameData/Bucks.txt", 
-                    sep=",", header=TRUE) %>%
-  select(1:24, -Rk, -X)
-
-```
-
 ```{r read in and merge data}
 
 start_path <- "C:/Users/Mason/Desktop/Git Repositories/BasketballProject/GameData/"
@@ -80,21 +73,46 @@ for (i in 1:length(file_name_list)) {
 ```
 
 ```{r}
+all_data <- read.csv("https://www.dropbox.com/s/ebj4qfc2lru2u4e/game_data.csv?dl=1")
+```
+
+
+```{r get most recent win/loss for each team}
 end_data <- all_data %>%
   group_by(team) %>%
   summarize(G = max(G)) %>%
   inner_join(all_data, by = c("team", "G")) %>%
   select(team, G, win_loss)
+
+top_3_teams <- end_data %>%
+  top_n(3, win_loss) %>%
+  pull(team)
 ```
 
-```{r}
+```{r plotly settings}
+font_settings <- list(
+  family = "Courier New, monospace",
+  size = 18,
+  color = "#7f7f7f"
+)
+x_settings <- list(
+  title = "Games Played",
+  titlefont = font_settings
+)
+y_settings <- list(
+  title = "Win/Loss Ratio",
+  titlefont = font_settings
+)
+
 all_data %>%
-  #filter(team %in% c("Bucks", "Lakers", "Suns")) %>%
-  ggplot(aes(x=G, y = win_loss, color=team)) +
-  geom_path() + 
-  ylim(0,10) +
-  ggtitle("What the fuck is this shit",
-          subtitle = "and why is it so god damn pretty") + 
-  labs(x="Games Played", y="Win/Loss Ratio")
+  filter(team %in% top_3_teams) %>%
+  plot_ly(x=~G, y=~win_loss,
+          type="scatter", mode="lines",
+          text = ~paste(team,
+                  "<br>", "W/L: ", round(win_loss, digits=2),
+                  "<br>", "Gm: ", G),
+          hoverinfo='text', color=~team) %>%
+  layout(title="Game-to-Game Win/Loss percentage for the Top 3 teams in the NBA (as of 12/14/19)",
+         xaxis=x_settings, yaxis=y_settings)
 ```
 
