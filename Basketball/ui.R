@@ -14,6 +14,9 @@ library(plotly)
 
 all_data <- read.csv(
   "https://www.dropbox.com/s/ebj4qfc2lru2u4e/game_data.csv?dl=1")
+rb_data <- read.csv(
+  "https://www.dropbox.com/s/qgonmh9bgvjlbhz/rb_data.csv?dl=1") %>%
+  select(-X)
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage("Basketball", theme = shinytheme("flatly"),
@@ -46,12 +49,47 @@ shinyUI(navbarPage("Basketball", theme = shinytheme("flatly"),
                          unique,
                        selected = "Clippers",
                        multiple=TRUE,
-                       options=list(maxItems=4))
+                       options=list(maxItems=4)),
+        sliderInput(inputId="games_played",
+                    label="Games played:",
+                    min=0,
+                    max=all_data %>%
+                      pull(G) %>%
+                      max,
+                    step=1,
+                    animate=TRUE,
+                    value=27)
       ),
       mainPanel(
         plotlyOutput("wl_plot")
       )
     )
            
-           )
+           ),
+  tabPanel("Rebounding",
+           sidebarLayout(
+             sidebarPanel(
+               selectizeInput(inputId="players", label="Players to show:",
+                              choices = rb_data %>%
+                                pull(player) %>%
+                                unique,
+                              selected = rb_data %>%
+                                pull(player) %>%
+                                unique,
+                              multiple=TRUE,
+                              options=list(maxItems=10)),
+               sliderInput(inputId="games_played_rb",
+                           label="Games Played:",
+                           min=0,
+                           max = rb_data %>%
+                             pull(game) %>%
+                             max,
+                           step=1,
+                           animate=TRUE,
+                           value=28)
+             ),
+             mainPanel(
+               plotlyOutput("rb_plot")
+             )
+           ))
 ))

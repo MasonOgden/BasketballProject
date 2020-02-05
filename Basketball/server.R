@@ -128,6 +128,8 @@ p4 <- plot_ly(type = 'scatter', mode = 'markers') %>%
 
 plot_list <- list(p1, p2, p3, p4)
 all_data <- read.csv("https://www.dropbox.com/s/ebj4qfc2lru2u4e/game_data.csv?dl=1")
+rb_data <- read.csv("https://www.dropbox.com/s/qgonmh9bgvjlbhz/rb_data.csv?dl=1") %>%
+  select(-X)
 
 # Define server logic required to plot the data
 shinyServer(function(input, output) {
@@ -147,10 +149,13 @@ shinyServer(function(input, output) {
   
   show_teams <- reactive({input$teams})
   
+  show_games <- reactive({input$games_played})
+  
   color_pallete <- brewer.pal(8, "Dark2")
   
   output$wl_plot <- renderPlotly({all_data %>%
-    filter(team %in% show_teams()) %>%
+    filter(team %in% show_teams(),
+           G <= show_games()) %>%
     plot_ly(x=~G, y=~win_loss,
             type="scatter", mode="lines",
             text = ~paste(team,
@@ -158,7 +163,7 @@ shinyServer(function(input, output) {
                           "<br>", "Gm: ", G),
             hoverinfo='text', color=~team,
             colors=color_pallete) %>%
-    layout(title="Game-to-Game Win/Loss Ratio (as of 12/14/19)",
+    layout(title="Game-to-Game Win/Loss Ratio\n(as of 12/14/19)",
            xaxis=list(
              title = "Games Played",
              titlefont = font_settings,
@@ -168,5 +173,34 @@ shinyServer(function(input, output) {
              titlefont = font_settings,
              range = c(0, max(all_data$win_loss, na.rm=TRUE)))
            )})
+  
+  show_players <- reactive({input$players})
+  
+  show_games_rb <- reactive({input$games_played_rb})
+  
+  color_pallete2 <- brewer.pal(10, "Dark2")
+  
+  output$rb_plot <- renderPlotly({rb_data %>%
+    filter(player %in% show_players(),
+           game <= show_games_rb()) %>%
+    plot_ly(x=~game, y=~sum_rb, 
+            type="scatter",
+            mode="lines",
+            text = ~paste(player,
+                          "<br>", "TRB: ", sum_rb,
+                          "<br>", "Gm: ", game),
+            hoverinfo='text',
+            color=~player) %>%
+    layout(title="Total Rebounds for the Top 10 Rebounders in the NBA\n(as of 12/16/19)",
+           xaxis=list(
+             title = "Games Played",
+             titlefont = font_settings,
+             range = c(1, max(rb_data$game))),
+           yaxis=list(
+             title = "Total Rebounds",
+             titlefont = font_settings,
+             range = c(0, max(rb_data$sum_rb) + 50))
+           )
+    })
   
 })
